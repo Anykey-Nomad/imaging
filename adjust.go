@@ -7,30 +7,6 @@ import (
 )
 
 // Grayscale produces a grayscale version of the image.
-func Grayscale(img image.Image) *image.NRGBA {
-	src := newScanner(img)
-	dst := image.NewNRGBA(image.Rect(0, 0, src.w, src.h))
-	parallel(0, src.h, func(ys <-chan int) {
-		for y := range ys {
-			i := y * dst.Stride
-			src.scan(0, y, src.w, y+1, dst.Pix[i:i+src.w*4])
-			for x := 0; x < src.w; x++ {
-				d := dst.Pix[i : i+3 : i+3]
-				r := d[0]
-				g := d[1]
-				b := d[2]
-				f := 0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b)
-				y := uint8(f + 0.5)
-				d[0] = y
-				d[1] = y
-				d[2] = y
-				i += 4
-			}
-		}
-	})
-	return dst
-}
-
 // Invert produces an inverted (negated) version of the image.
 func Invert(img image.Image) *image.NRGBA {
 	src := newScanner(img)
@@ -153,16 +129,8 @@ func AdjustBrightness(img image.Image, percentage float64) *image.NRGBA {
 	if percentage == 0 {
 		return Clone(img)
 	}
-
 	percentage = math.Min(math.Max(percentage, -100.0), 100.0)
-	lut := make([]uint8, 256)
-
-	shift := 255.0 * percentage / 100.0
-	for i := 0; i < 256; i++ {
-		lut[i] = clamp(float64(i) + shift)
-	}
-
-	return adjustLUT(img, lut)
+	return adjustBrightnessImpl(toNRGBA(img), percentage)
 }
 
 // AdjustGamma performs a gamma correction on the image and returns the adjusted image.

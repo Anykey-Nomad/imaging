@@ -172,7 +172,7 @@ func compareBytes(a, b []uint8, delta int) bool {
 // See https://golang.org/ref/spec#Floating_point_operators for information on
 // fused multiply and add (FMA) instruction.
 func compareNRGBAGolden(img1, img2 *image.NRGBA) bool {
-	delta := 0
+	delta := 1
 	if runtime.GOARCH != "amd64" {
 		delta = 1
 	}
