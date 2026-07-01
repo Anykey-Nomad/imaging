@@ -8,3 +8,8 @@ import "image"
 func tryGPUResize(src *image.NRGBA, dstW, dstH int) *image.NRGBA {
 	return nil
 }
+
+// tryGPUResizeCatmullRom returns nil — caller falls back to SIMD/scalar.
+func tryGPUResizeCatmullRom(src *image.NRGBA, dstW, dstH int) *image.NRGBA {
+	return nil
+}

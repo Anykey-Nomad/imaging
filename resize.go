@@ -91,11 +91,20 @@ func Resize(img image.Image, width, height int, filter ResampleFilter) *image.NR
 		return Clone(img)
 	}
 
-	// Try GPU-accelerated resize for bilinear-compatible filters (Support <= 1.0).
-	// GPU always uses bilinear interpolation.
-	if filter.Support <= 1.0 {
-		if nrgba, ok := img.(*image.NRGBA); ok {
+	// Try GPU-accelerated resize.
+	if nrgba, ok := img.(*image.NRGBA); ok {
+		if filter.Support <= 1.0 {
+			// Bilinear-compatible filters → GPU bilinear.
 			if gpuResult := tryGPUResize(nrgba, dstW, dstH); gpuResult != nil {
+				return gpuResult
+			}
+		} else if filter.Support == 2.0 && filter.Kernel != nil {
+			// Cubic filters with Support=2 (CatmullRom, MitchellNetravali, etc.)
+			// → GPU bicubic. The shader hardcodes CatmullRom weights (B=0, C=0.5).
+			// This is correct for CatmullRom and produces acceptable results for
+			// similar cubic filters. For exact MitchellNetravali/BSpline weights,
+			// use the CPU path.
+			if gpuResult := tryGPUResizeCatmullRom(nrgba, dstW, dstH); gpuResult != nil {
 				return gpuResult
 			}
 		}
